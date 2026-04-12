@@ -1,0 +1,10 @@
+#!/bin/bash
+# host-relay host-side launcher
+# Runs hr using packages from the snap-installed Python path.
+# Install: cp hr-host ~/.local/bin/hr && chmod +x ~/.local/bin/hr
+
+SNAP_PYPATH="/home/william/snap/copilot-cli/17/.local/lib/python3.12/site-packages"
+SNAP_HR="/home/william/snap/copilot-cli/17/.local/bin/hr"
+
+export PYTHONPATH="${SNAP_PYPATH}${PYTHONPATH:+:$PYTHONPATH}"
+exec /usr/bin/python3 "${SNAP_HR}" "$@"
