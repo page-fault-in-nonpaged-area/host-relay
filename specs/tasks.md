@@ -55,7 +55,7 @@ host-relay/
 - Implement `write_result(result: ResultFile, spool_dir: Path)` — writes `<ulid>.result.tmp` then renames to `<ulid>.result` atomically. [REQ-SPOOL-006, REQ-HR-016]
 - Implement `read_result(path: Path) -> ResultFile`.
 - Implement `cleanup_orphans(spool_dir: Path, max_age_seconds: int = 300)` — deletes `.job` and `.result` files older than `max_age_seconds`. [REQ-SPOOL-007]
-- Implement `spool_dir_path() -> Path` — returns `~/.host-relay/spool/`, creating it with mode `0700` if absent. [REQ-SPOOL-006]
+- Implement `spool_dir_path() -> Path` — returns `~/host-relay/`, creating it with mode `0700` if absent. [REQ-SPOOL-006]
 
 **T-101** Write `tests/test_spool.py`:
 - Test round-trip: write a job, read it back, assert fields match.
@@ -247,7 +247,7 @@ Subcommands:
 **T-900** Write `install.sh`:
 - Detect OS (`uname -s`): `Linux` or `Darwin`. [REQ-PLAT-001, REQ-PLAT-002]
 - Detect available package manager: `uv` → `uv tool install host-relay`; else `pip install --user host-relay`; else print error and exit 1. [REQ-INST-003, REQ-INST-004, REQ-INST-005]
-- Create `~/.host-relay/spool/` and `~/.host-relay/logs/` with `mkdir -p -m 700`. [REQ-INST-006]
+- Create `~/host-relay/` and `~/.host-relay/logs/` with `mkdir -p -m 700`. [REQ-INST-006]
 - Detect shell (`$SHELL`); identify target RC file. [REQ-PLAT-006]
 - Check for existing `# host-relay` marker in RC file; append stanza only if absent. [REQ-INST-008]
   ```sh

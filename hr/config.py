@@ -15,12 +15,13 @@ LOGS_DIR = HR_DIR / "logs"
 PID_FILE = HR_DIR / "hr.pid"
 CONFIG_FILE = HR_DIR / "config.json"
 
-# Shared spool in /tmp — accessible by both the host process and any sandboxed
-# agent (snap, container, etc.) running as the same user, regardless of HOME.
-# /tmp works on Linux and macOS without any extra configuration.
-# Override with HR_SPOOL_DIR only if you truly need a non-standard location.
+# Spool lives in ~/host-relay — accessible by both the host process and any
+# sandboxed agent (snap, container, etc.) that shares the user's home directory.
+# $HOME is visible across snap confinement boundaries unlike /tmp, which snap
+# mounts privately per-app.
+# Override with HR_SPOOL_DIR if you need a non-standard location.
 _spool_override = os.environ.get("HR_SPOOL_DIR")
-SPOOL_DIR = Path(_spool_override) if _spool_override else Path("/tmp/hr-spool")
+SPOOL_DIR = Path(_spool_override) if _spool_override else Path.home() / "host-relay"
 
 
 @dataclass

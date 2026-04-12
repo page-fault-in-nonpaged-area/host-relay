@@ -48,8 +48,9 @@ fi
 # Create directories
 # -------------------------------------------------------
 info "Creating $HR_DIR..."
-mkdir -p -m 700 "$HR_DIR/spool"
 mkdir -p -m 700 "$HR_DIR/logs"
+info "Creating ~/host-relay (spool)..."
+mkdir -p -m 700 "$HOME/host-relay"
 
 # -------------------------------------------------------
 # Detect shell and RC file

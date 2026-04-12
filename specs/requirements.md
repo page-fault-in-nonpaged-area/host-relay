@@ -30,7 +30,7 @@ Systems referenced:
 
 **REQ-INST-005** Where neither `uv` nor `pip` is present, the installer shall print a clear diagnostic message and exit with a non-zero code without making any changes to the system.
 
-**REQ-INST-006** The installer shall create `~/.host-relay/spool/` and `~/.host-relay/logs/` with permissions `0700`.
+**REQ-INST-006** The installer shall create `~/host-relay/` and `~/.host-relay/logs/` with permissions `0700`.
 
 **REQ-INST-007** The installer shall append a startup stanza to `~/.bashrc` on Linux, `~/.zshrc` on macOS (if present), and `~/.bash_profile` on macOS if `~/.bashrc` is absent, such that `hr` is started idempotently in new interactive shells.
 
@@ -92,7 +92,7 @@ Systems referenced:
 
 ### 3.2 Watcher loop
 
-**REQ-HR-009** While running, `hr` shall poll `~/.host-relay/spool/` for new `.job` files at an interval not exceeding 100 milliseconds.
+**REQ-HR-009** While running, `hr` shall poll `~/host-relay/` for new `.job` files at an interval not exceeding 100 milliseconds.
 
 **REQ-HR-010** When a new `.job` file is detected, `hr` shall acquire an advisory file lock on it before dispatching it to a worker, to prevent double-pickup when multiple `hr` instances are accidentally running.
 

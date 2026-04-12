@@ -39,7 +39,7 @@ The naive fix — "just install the tool inside the snap" — is not always poss
 │                                          │           │
 └──────────────────────────────────────────┼───────────┘
                                            │  (shared filesystem)
-                           ~/.host-relay/spool/
+                           ~/host-relay/
                                            │
 ┌──────────────────────────────────────────┼───────────┐
 │  Host (bare OS)                          │           │
@@ -65,7 +65,7 @@ The naive fix — "just install the tool inside the snap" — is not always poss
 
 ## Components in Detail
 
-### 1. Spool Directory — `~/.host-relay/spool/`
+### 1. Spool Directory — `~/host-relay/`
 
 The entire communication channel is a directory of small JSON files. No SQLite, no message queue, no network.
 
@@ -213,7 +213,7 @@ uvx host-relay install
 The installer:
 
 1. Installs `hr` as a `uv` tool (or falls back to `pip install --user`).
-2. Creates `~/.host-relay/spool/` and `~/.host-relay/logs/`.
+2. Creates `~/host-relay/` and `~/.host-relay/logs/`.
 3. Appends a one-liner to `~/.bashrc` (and `~/.zshrc` if present) that starts `hr` in the background on new shells, idempotently (checks `hr.pid` first).
 4. Prints the MCP config snippet the user pastes into their agent config (e.g. Claude Desktop's `claude_desktop_config.json`, VS Code MCP settings, or Copilot CLI's MCP config).
 5. Starts `hr` immediately in the current shell.
@@ -237,7 +237,7 @@ There is no separate MCP server process to manage. `hr mcp` sub-command starts t
 
 ## Security Considerations
 
-- **Local only.** The spool directory is `~/.host-relay/spool/` with mode `0700`. No network socket is opened at any point.
+- **Local only.** The spool directory is `~/host-relay/` with mode `0700`. No network socket is opened at any point.
 - **No privilege escalation.** `hr` runs as the invoking user. It cannot do anything that user could not already do in a terminal.
 - **Simple-command policy.** Prevents the agent from accidentally (or maliciously) running complex shell programs or exfiltrating data via command substitution chains.
 - **Timeout enforcement.** All subprocesses are killed after `timeout` seconds via `subprocess.run(..., timeout=...)`.
@@ -250,7 +250,7 @@ There is no separate MCP server process to manage. `hr mcp` sub-command starts t
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| IPC mechanism | Files in `~/.host-relay/spool/` | Zero dependencies, fully auditable, works across snap/container boundaries that share the host home dir |
+| IPC mechanism | Files in `~/host-relay/` | Zero dependencies, fully auditable, works across snap/container boundaries that share the host home dir |
 | Language | Python (uv tool) | Ships as a single installable; uv gives hermetic deps without polluting system Python |
 | MCP transport | stdio (launched by agent) | Standard MCP pattern; no port to manage; agent client owns the lifecycle |
 | Shell sourcing | `bash --login -i -c env` subprocess | Captures the real resolved environment without parsing RC files |

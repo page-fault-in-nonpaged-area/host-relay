@@ -46,7 +46,7 @@ hr --once   # Process one job and exit (for testing)
 ## How It Works
 
 1. The agent calls `host_run("gh repo list")` via MCP
-2. The MCP server writes a `.job` file to `~/.host-relay/spool/`
+2. The MCP server writes a `.job` file to `~/host-relay/`
 3. The `hr` listener picks it up, validates it, executes it
 4. The result is written back as a `.result` file
 5. The MCP server reads it and returns it to the agent
@@ -63,7 +63,7 @@ Only simple commands and pipelines are allowed. Rejected:
 - Process forks: `nohup`, `disown`, `setsid`, `&`
 - Shell interpreters as commands: `bash`, `sh`, `zsh`
 - Script execution: `python3 script.py`
-- Redirects outside `~` and `/tmp`
+- Redirects outside `~`, `~/host-relay`, and `/tmp`
 
 ## Docs
 
