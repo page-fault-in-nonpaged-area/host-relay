@@ -1,0 +1,52 @@
+"""Configuration for host-relay."""
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+HR_DIR = Path.home() / ".host-relay"
+SPOOL_DIR = HR_DIR / "spool"
+LOGS_DIR = HR_DIR / "logs"
+PID_FILE = HR_DIR / "hr.pid"
+CONFIG_FILE = HR_DIR / "config.json"
+
+
+@dataclass
+class Config:
+    worker_count: int = 4
+    default_timeout: int = 30
+    max_timeout: int = 120
+    poll_interval_ms: int = 100
+    result_poll_interval_ms: int = 50
+    log_max_bytes: int = 10_485_760  # 10 MB
+    log_backup_count: int = 3
+    extra_blocked_executables: list[str] = field(default_factory=list)
+
+
+def load_config() -> Config:
+    """Load config from ~/.host-relay/config.json, falling back to defaults."""
+    if not CONFIG_FILE.exists():
+        return Config()
+
+    try:
+        raw = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.error("Invalid config at %s: %s — using defaults", CONFIG_FILE, exc)
+        return Config()
+
+    kwargs: dict = {}
+    cfg = Config()
+    for fld in cfg.__dataclass_fields__:
+        if fld in raw:
+            kwargs[fld] = raw[fld]
+
+    try:
+        return Config(**kwargs)
+    except TypeError as exc:
+        logger.error("Bad config values: %s — using defaults", exc)
+        return Config()
