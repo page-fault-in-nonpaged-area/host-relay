@@ -126,19 +126,82 @@ else
 fi
 
 # -------------------------------------------------------
+# Configure for GitHub Copilot CLI (snap)
+# -------------------------------------------------------
+MCP_CFG=""
+SNAP_CONFIGURED=false
+if [ -d "$HOME/snap/copilot-cli" ]; then
+    SNAP_REAL="$(realpath "$HOME/snap/copilot-cli/current" 2>/dev/null || echo "")"
+    if [ -n "$SNAP_REAL" ] && [ -d "$SNAP_REAL" ]; then
+        info "GitHub Copilot CLI snap detected — installing into snap environment..."
+
+        SNAP_PYVER="$(python3 -c 'import sys; print(f"python{sys.version_info.major}.{sys.version_info.minor}")')"
+        SNAP_LOCAL="$SNAP_REAL/.local"
+        SNAP_SITE="$SNAP_LOCAL/lib/$SNAP_PYVER/site-packages"
+        SNAP_BIN="$SNAP_LOCAL/bin"
+        SNAP_HR="$SNAP_BIN/hr"
+        COPILOT_CONF="$SNAP_REAL/.copilot"
+        MCP_CFG="$COPILOT_CONF/mcp-config.json"
+
+        mkdir -p "$SNAP_SITE" "$SNAP_BIN"
+        python3 -m pip install --quiet --prefix "$SNAP_LOCAL" --upgrade host-relay \
+            || python3 -m pip install --quiet --prefix "$SNAP_LOCAL" --upgrade \
+                       --break-system-packages host-relay
+
+        mkdir -p "$COPILOT_CONF"
+        python3 - "$MCP_CFG" "$SNAP_HR" "$SNAP_SITE" <<'PYEOF'
+import sys, json
+from pathlib import Path
+
+cfg_path = Path(sys.argv[1])
+snap_hr  = sys.argv[2]
+pypath   = sys.argv[3]
+
+cfg = {}
+if cfg_path.exists():
+    try:
+        cfg = json.loads(cfg_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        cfg = {}
+
+cfg.setdefault("mcpServers", {})["host-relay"] = {
+    "type": "stdio",
+    "command": snap_hr,
+    "args": ["mcp"],
+    "env": {"PYTHONPATH": pypath},
+    "tools": ["*"],
+}
+
+cfg_path.write_text(json.dumps(cfg, indent=2) + "\n")
+PYEOF
+        SNAP_CONFIGURED=true
+        ok "Copilot CLI snap configured at $MCP_CFG"
+    fi
+fi
+
+# -------------------------------------------------------
 # Print MCP config snippet
 # -------------------------------------------------------
 ok "Installation complete!"
 echo ""
-echo "Add this to your MCP config (e.g. claude_desktop_config.json):"
-echo ""
-echo '  {'
-echo '    "mcpServers": {'
-echo '      "host-relay": {'
-echo '        "command": "hr",'
-echo '        "args": ["mcp"]'
-echo '      }'
-echo '    }'
-echo '  }'
-echo ""
+if [ "$SNAP_CONFIGURED" = true ]; then
+    ok "Copilot CLI MCP config written automatically to:"
+    echo "    $MCP_CFG"
+    echo ""
+    echo "Restart Copilot CLI and verify with:  /mcp show"
+else
+    echo "Add this to your MCP config (~/.copilot/mcp-config.json or claude_desktop_config.json):"
+    echo ""
+    echo '  {'
+    echo '    "mcpServers": {'
+    echo '      "host-relay": {'
+    echo '        "type": "stdio",'
+    echo '        "command": "hr",'
+    echo '        "args": ["mcp"],'
+    echo '        "tools": ["*"]'
+    echo '      }'
+    echo '    }'
+    echo '  }'
+    echo ""
+fi
 ok "Run 'hr status' to verify the listener is running."
