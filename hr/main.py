@@ -103,7 +103,8 @@ def cmd_start(config: Config, once: bool = False) -> None:
         check_pid()
         write_pid()
 
-    logger.info("hr starting, pid=%d, workers=%d", os.getpid(), config.worker_count)
+    print(f"hr starting  pid={os.getpid()}  spool={SPOOL_DIR}  workers={config.worker_count}")
+    logger.info("hr starting, pid=%d, spool=%s, workers=%d", os.getpid(), SPOOL_DIR, config.worker_count)
 
     try:
         host_env = resolve_host_env()
@@ -116,34 +117,45 @@ def cmd_start(config: Config, once: bool = False) -> None:
 
 def cmd_status() -> None:
     """Print status of the hr process."""
+    print(f"  spool : {SPOOL_DIR}")
+    print(f"  pid   : {PID_FILE}")
+    print(f"  log   : {LOGS_DIR / 'hr.log'}")
+    print()
+
     if not PID_FILE.exists():
-        print("hr is not running")
+        print("Status  : NOT RUNNING (no pid file)")
         _print_spool_info()
         return
 
     try:
         pid = int(PID_FILE.read_text().strip())
     except (ValueError, OSError):
-        print("hr is not running (invalid PID file)")
+        print("Status  : NOT RUNNING (invalid pid file)")
         return
 
     if _pid_is_alive(pid):
-        print(f"hr is running (PID {pid})")
+        print(f"Status  : RUNNING (PID {pid})")
     else:
-        print(f"hr is not running (stale PID file for PID {pid})")
+        print(f"Status  : NOT RUNNING (stale pid {pid})")
     _print_spool_info()
 
 
 def _print_spool_info() -> None:
     if not SPOOL_DIR.exists():
+        print(f"  spool dir does not exist yet")
         return
     jobs = list(SPOOL_DIR.glob("*.job"))
     results = list(SPOOL_DIR.glob("*.result"))
-    print(f"  Pending jobs: {len(jobs)}")
+    print(f"  pending jobs   : {len(jobs)}")
+    print(f"  result files   : {len(results)}")
     if results:
         latest = max(results, key=lambda p: p.stat().st_mtime)
         mtime = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(latest.stat().st_mtime))
-        print(f"  Last result: {mtime}")
+        print(f"  last result    : {mtime}  ({latest.name})")
+    if jobs:
+        for j in sorted(jobs)[-3:]:
+            age = time.time() - j.stat().st_mtime
+            print(f"  pending        : {j.name}  (age {age:.0f}s)")
 
 
 def cmd_stop() -> None:

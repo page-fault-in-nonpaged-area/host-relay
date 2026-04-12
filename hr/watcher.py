@@ -188,7 +188,7 @@ def _poll_once(
         try:
             job = read_job(job_path)
         except Exception as exc:
-            logger.error("Failed to read job file %s: %s", job_path, exc)
+            logger.error("REJECT malformed job=%s: %s", job_id, exc)
             # Quarantine: write error result and delete malformed file
             try:
                 error_result = ResultFile(
@@ -205,11 +205,13 @@ def _poll_once(
             continue
 
         # Check if job has timed out before execution
-        if time.time() - job.ts > job.timeout:
-            logger.warning("Job %s expired before pickup (age=%.1fs)", job.id, time.time() - job.ts)
+        age = time.time() - job.ts
+        if age > job.timeout:
+            logger.warning("EXPIRED job=%s cmd=%r age=%.1fs timeout=%ss",
+                           job.id, job.cmd, age, job.timeout)
             timeout_result = ResultFile(
                 id=job.id,
-                stderr=f"Job expired before pickup (was pending for {time.time() - job.ts:.1f}s)",
+                stderr=f"Job expired before pickup (was pending for {age:.1f}s)",
                 exit_code=124,
             )
             try:
@@ -221,6 +223,9 @@ def _poll_once(
             os.close(fd)
             continue
 
+        logger.info("QUEUED  job=%s cmd=%r timeout=%ss extra_env=%s",
+                    job.id, job.cmd, job.timeout, list(job.env.keys()) or "none")
+
         # Dispatch to worker pool
         locked_fds[job_id] = fd
 
@@ -229,6 +234,8 @@ def _poll_once(
                 result = future.result()
                 write_result(result, sp)
                 jp.unlink(missing_ok=True)
+                logger.info("DONE    job=%s exit=%s elapsed=%.0fms",
+                            jid, result.exit_code, result.elapsed_ms)
             except Exception as exc:
                 logger.error("Error writing result for job %s: %s", jid, exc)
 

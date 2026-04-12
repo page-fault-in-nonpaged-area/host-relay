@@ -15,9 +15,10 @@ LOGS_DIR = HR_DIR / "logs"
 PID_FILE = HR_DIR / "hr.pid"
 CONFIG_FILE = HR_DIR / "config.json"
 
-# Shared spool: a fixed path both the host and any sandboxed agent (snap/container)
-# running as the same user can read and write. The host-side hr creates it on startup.
-# Override with HR_SPOOL_DIR env var only if you need a non-standard location.
+# Shared spool in /tmp — accessible by both the host process and any sandboxed
+# agent (snap, container, etc.) running as the same user, regardless of HOME.
+# /tmp works on Linux and macOS without any extra configuration.
+# Override with HR_SPOOL_DIR only if you truly need a non-standard location.
 _spool_override = os.environ.get("HR_SPOOL_DIR")
 SPOOL_DIR = Path(_spool_override) if _spool_override else Path("/tmp/hr-spool")
 
