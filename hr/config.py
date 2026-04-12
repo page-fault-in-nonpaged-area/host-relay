@@ -4,16 +4,22 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 HR_DIR = Path.home() / ".host-relay"
-SPOOL_DIR = HR_DIR / "spool"
 LOGS_DIR = HR_DIR / "logs"
 PID_FILE = HR_DIR / "hr.pid"
 CONFIG_FILE = HR_DIR / "config.json"
+
+# Shared spool: a fixed path both the host and any sandboxed agent (snap/container)
+# running as the same user can read and write. The host-side hr creates it on startup.
+# Override with HR_SPOOL_DIR env var only if you need a non-standard location.
+_spool_override = os.environ.get("HR_SPOOL_DIR")
+SPOOL_DIR = Path(_spool_override) if _spool_override else Path("/tmp/hr-spool")
 
 
 @dataclass
