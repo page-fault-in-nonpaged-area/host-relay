@@ -15,18 +15,23 @@ logger = logging.getLogger(__name__)
 # uses the real home directory.  Both sides must agree on HR_DIR and SPOOL_DIR.
 _real_home = Path(os.environ.get("SNAP_REAL_HOME") or Path.home())
 
-HR_DIR = _real_home / ".host-relay"
-LOGS_DIR = HR_DIR / "logs"
-PID_FILE = HR_DIR / "hr.pid"
-CONFIG_FILE = HR_DIR / "config.json"
-
 # Spool lives in ~/host-relay — accessible by both the host process and any
 # sandboxed agent (snap, container, etc.) that shares the user's home directory.
 # $HOME is visible across snap confinement boundaries unlike /tmp, which snap
-# mounts privately per-app.
+# mounts privately per-app.  Hidden directories (dot-dirs) in the real home are
+# blocked by snap's AppArmor policy, so hr.pid is kept in SPOOL_DIR instead.
 # Override with HR_SPOOL_DIR if you need a non-standard location.
 _spool_override = os.environ.get("HR_SPOOL_DIR")
 SPOOL_DIR = Path(_spool_override) if _spool_override else _real_home / "host-relay"
+
+# Admin files (logs, config) live in ~/.host-relay — only accessed by the
+# host-side hr process, so the hidden dir restriction doesn't matter there.
+HR_DIR = _real_home / ".host-relay"
+LOGS_DIR = HR_DIR / "logs"
+CONFIG_FILE = HR_DIR / "config.json"
+
+# PID file lives in SPOOL_DIR so the snap-confined MCP server can read it.
+PID_FILE = SPOOL_DIR / "hr.pid"
 
 
 @dataclass
