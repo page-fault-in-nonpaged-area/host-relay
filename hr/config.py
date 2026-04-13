@@ -10,7 +10,12 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-HR_DIR = Path.home() / ".host-relay"
+# Use SNAP_REAL_HOME when running inside a snap — snap remaps $HOME to a
+# versioned path (e.g. ~/snap/copilot-cli/17) while the host-side hr process
+# uses the real home directory.  Both sides must agree on HR_DIR and SPOOL_DIR.
+_real_home = Path(os.environ.get("SNAP_REAL_HOME") or Path.home())
+
+HR_DIR = _real_home / ".host-relay"
 LOGS_DIR = HR_DIR / "logs"
 PID_FILE = HR_DIR / "hr.pid"
 CONFIG_FILE = HR_DIR / "config.json"
@@ -21,7 +26,7 @@ CONFIG_FILE = HR_DIR / "config.json"
 # mounts privately per-app.
 # Override with HR_SPOOL_DIR if you need a non-standard location.
 _spool_override = os.environ.get("HR_SPOOL_DIR")
-SPOOL_DIR = Path(_spool_override) if _spool_override else Path.home() / "host-relay"
+SPOOL_DIR = Path(_spool_override) if _spool_override else _real_home / "host-relay"
 
 
 @dataclass
